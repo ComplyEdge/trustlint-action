@@ -1,0 +1,79 @@
+name: 'ComplyEdge TrustLint'
+description: 'EU AI Act compliance linter for AI prompts and content. Wraps the trustlint CLI from PyPI, scans path globs against the ComplyEdge rule corpus, exits 1 on critical violations to block merge.'
+author: 'ComplyEdge'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  paths:
+    description: 'Space-separated bash globs of files to scan. Defaults to common AI-prompt locations: `**/prompts/*.md **/prompts/*.txt **/*.prompt agents/*.system.md`.'
+    required: false
+    default: '**/prompts/*.md **/prompts/*.txt **/*.prompt agents/*.system.md'
+  jurisdiction:
+    description: 'Jurisdiction filter for the rule corpus (EU | US | GLOBAL | universal). Passed to `trustlint check --jurisdiction`.'
+    required: false
+    default: 'EU'
+  api-key:
+    description: 'ComplyEdge API key. When set, the action runs `trustlint scan` (API-backed check against api.complyedge.io). When empty, runs `trustlint check` (offline, regex-only). Set via a repo secret: `${{ secrets.COMPLYEDGE_API_KEY }}`.'
+    required: false
+    default: ''
+  severity-threshold:
+    description: 'Minimum severity that causes the workflow to fail (critical | high | medium | low). Default `high` matches the trustlint CLI default and preserves prior behaviour. Card 225 ships this end-to-end.'
+    required: false
+    default: 'high'
+  fail-on-violation:
+    description: 'When `true` (default), the workflow fails on violations at-or-above `severity-threshold`. Set to `false` to surface violations as annotations without failing.'
+    required: false
+    default: 'true'
+  comment-on-pr:
+    description: 'When `true` and the workflow is running on a pull_request event, post a Markdown violation report on the PR (idempotent via `gh pr comment --edit-last`). Requires `permissions: pull-requests: write` at the workflow/job level. Default `false`. Card 226.'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'Token used by `gh pr comment` when `comment-on-pr=true`. Defaults to `${{ github.token }}`; override with a PAT if posting from a fork-PR scenario.'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  files-scanned:
+    description: 'Number of files the action scanned.'
+    value: ${{ steps.scan.outputs.files-scanned }}
+  violating-files:
+    description: 'Space-separated list of files with at least one critical violation.'
+    value: ${{ steps.scan.outputs.violating-files }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install trustlint
+      shell: bash
+      run: pip install --upgrade trustlint
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        COMPLYEDGE_API_KEY: ${{ inputs.api-key }}
+      run: |
+        bash "${{ github.action_path }}/scripts/run-scan.sh" \
+          "${{ inputs.paths }}" \
+          "${{ inputs.jurisdiction }}" \
+          "${{ inputs.fail-on-violation }}" \
+          "${{ inputs.severity-threshold }}"
+
+    - name: Post PR comment (idempotent)
+      if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request' && always()
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        bash "${{ github.action_path }}/scripts/post-pr-comment.sh" \
+          "${{ inputs.paths }}" \
+          "${{ inputs.jurisdiction }}" \
+          "${{ inputs.severity-threshold }}"
