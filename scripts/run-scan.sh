@@ -11,7 +11,7 @@
 #   $1  paths               — space-separated globs (e.g. "**/prompts/*.md docs/*.md")
 #   $2  jurisdiction        — EU | US | GLOBAL | universal
 #   $3  fail_on_violation   — "true" | "false"
-#   $4  severity_threshold  — critical | high | medium | low (default high; card 225)
+#   $4  severity_threshold  — critical | high | medium | low (default high)
 #
 # Env:
 #   COMPLYEDGE_API_KEY  — optional; when set, uses `trustlint scan` (API) instead of `trustlint check` (offline)

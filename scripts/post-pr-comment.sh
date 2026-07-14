@@ -4,7 +4,7 @@
 #
 # Why this exists: the v0 action ships the run-scan.sh wrapper that prints
 # a human-readable report and aggregates exit codes. For the PR-comment
-# formatter (card 226 / unblocked by card 225's --json) we need a separate
+# formatter (follow-up to the --json work) we need a separate
 # step that captures JSON output. Re-running trustlint here (rather than
 # inside run-scan.sh) keeps the two scripts orthogonal and lets users opt
 # into PR comments via the `comment-on-pr` action input.
