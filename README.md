@@ -1,12 +1,16 @@
 # ComplyEdge TrustLint — GitHub Action
 
-Composite GitHub Action that scans AI-prompt / agent-instruction files against the [EU AI Act](https://eur-lex.europa.eu/eli/reg/2024/1689) rule corpus using the [`trustlint`](https://pypi.org/project/trustlint/) CLI. Fails the workflow on threshold violations so merges do not ship prohibited-practice prompts.
+CI gate that lint-scans **AI prompts and agent-instruction files** with ComplyEdge’s [TrustLint](https://pypi.org/project/trustlint/) corpus and **article citations** — not an Annex III paperwork scorer and not a production runtime gateway. Offline `trustlint check` by default; optional API-backed `trustlint scan` with a ComplyEdge API key. Fails the job on threshold violations so prohibited-practice prompts do not merge.
 
 **Install:** `uses: complyedge/trustlint-action@v1`  
+**Product:** https://complyedge.io  
 **Public repo:** https://github.com/ComplyEdge/trustlint-action  
-**PyPI CLI:** https://pypi.org/project/trustlint/
+**PyPI CLI:** https://pypi.org/project/trustlint/  
+**Regulation:** [EU AI Act (2024/1689)](https://eur-lex.europa.eu/eli/reg/2024/1689)
 
 > **Source of truth for development:** the ComplyEdge platform monorepo at `packages/trustlint-action/`. This public repo is the published export (via `scripts/release.sh` + the monorepo `trustlint-action-release` workflow).
+
+This Action is a **CI merge gate** (prompt/content lint). It is **not** legal advice, **not** certified by GitHub, and **not** ComplyEdge’s OPA/Rego runtime API (`api.complyedge.io` runtime enforcement is a separate product surface).
 
 ## Usage
 
@@ -32,6 +36,20 @@ jobs:
           fail-on-violation: 'true'
 ```
 
+### Pin by commit SHA (high-security consumers)
+
+Prefer an immutable SHA after verifying the tag:
+
+```yaml
+- uses: complyedge/trustlint-action@<full-commit-sha>
+```
+
+Resolve the SHA for a tag with:
+
+```bash
+git ls-remote https://github.com/ComplyEdge/trustlint-action.git refs/tags/v1
+```
+
 ## Inputs
 
 | Name | Required | Default | Description |
@@ -49,30 +67,33 @@ jobs:
 | Name | Description |
 |---|---|
 | `files-scanned` | Number of files scanned. |
-| `violating-files` | Space-separated list of files with at least one critical violation. |
+| `violating-files` | Space-separated list of files that failed the scan step. |
 
 ## What it scans
 
-High-value on **AI prompts, agent system prompts, content templates** — anything that flows into or out of an LLM. Not a general-purpose code linter.
+High-value on **AI prompts, agent system prompts, content templates** — anything that flows into or out of an LLM. Not a general-purpose code linter and not an Annex III whole-product classifier.
 
 ## Behaviour
 
-- Installs `trustlint` from PyPI.
+- Installs pinned `trustlint==2.0.0` from PyPI.
 - Expands `paths`, runs `trustlint check` (or `scan` when `api-key` is set) per file.
+- Findings carry **rule citations** from the corpus when rules fire (also surfaced in optional PR comments).
 - Emits `::error file=…::` annotations on violations and (by default) fails the job.
 - Optional PR comment when `comment-on-pr: true`.
 
 ## Test fixtures (this repo)
 
 ```bash
-pip install trustlint
+pip install 'trustlint==2.0.0'
 bash scripts/run-scan.sh 'test-prompts/compliant.md' EU true high   # exit 0
 bash scripts/run-scan.sh 'test-prompts/violating.md' EU true high   # exit 1
 ```
 
 ## Marketplace
 
-Branding is set in `action.yml` (`shield` / `blue`). Submit or update the GitHub Marketplace listing from this repo’s Releases UI (publishers with org admin).
+Branding is set in `action.yml` (`shield` / `blue`). Publish or update the GitHub Marketplace listing from this repo’s Releases UI (org admin + Marketplace Developer Agreement + 2FA).
+
+Suggested listing framing: CI gate for AI prompts/agent instructions with TrustLint corpus and article citations — freemium offline check → optional API key. Categories: **Security** (primary), **Code quality** (secondary).
 
 ## Layout
 

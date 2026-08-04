@@ -61,11 +61,16 @@ def render(jsonl_path: str) -> str:
             fp = f.get("file") or "<text>"
             violating_files.append(fp)
             for v in violations:
+                citation = (v.get("citation") or v.get("citations") or "").strip()
+                if isinstance(citation, list):
+                    citation = "; ".join(str(c) for c in citation if c)
+                citation = " ".join(str(citation).split())
                 rows.append({
                     "file": fp,
                     "rule_id": v.get("rule_id", "?"),
                     "severity": (v.get("severity") or "?").lower(),
                     "description": (v.get("description") or "").splitlines()[0][:90],
+                    "citation": citation[:120],
                 })
 
     grand_total = sum(totals.values())
@@ -89,11 +94,12 @@ def render(jsonl_path: str) -> str:
         lines.append("")
         lines.append("### Violations")
         lines.append("")
-        lines.append("| File | Rule | Severity | Description |")
-        lines.append("|---|---|---|---|")
+        lines.append("| File | Rule | Severity | Description | Citation |")
+        lines.append("|---|---|---|---|---|")
         for r in rows:
+            cite = r["citation"] or "—"
             lines.append(
-                f"| `{r['file']}` | `{r['rule_id']}` | **{r['severity'].upper()}** | {r['description']} |"
+                f"| `{r['file']}` | `{r['rule_id']}` | **{r['severity'].upper()}** | {r['description']} | {cite} |"
             )
 
     # Footer with a link back to the workflow run (when available)

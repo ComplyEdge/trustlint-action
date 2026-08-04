@@ -1,5 +1,5 @@
 name: 'ComplyEdge TrustLint'
-description: 'EU AI Act compliance linter for AI prompts and content. Wraps the trustlint CLI from PyPI, scans path globs against the ComplyEdge rule corpus, exits 1 on critical violations to block merge.'
+description: 'CI gate: lint AI prompts/agent instructions with TrustLint corpus + article citations (offline; optional API).'
 author: 'ComplyEdge'
 branding:
   icon: 'shield'
@@ -15,7 +15,7 @@ inputs:
     required: false
     default: 'EU'
   api-key:
-    description: 'ComplyEdge API key. When set, the action runs `trustlint scan` (API-backed check against api.complyedge.io). When empty, runs `trustlint check` (offline, regex-only). Set via a repo secret: `${{ secrets.COMPLYEDGE_API_KEY }}`.'
+    description: 'ComplyEdge API key. When set, the action runs `trustlint scan` (API-backed check against api.complyedge.io). When empty, runs `trustlint check` (offline, regex Tier-1). Set via a repo secret: `${{ secrets.COMPLYEDGE_API_KEY }}`.'
     required: false
     default: ''
   severity-threshold:
@@ -40,7 +40,7 @@ outputs:
     description: 'Number of files the action scanned.'
     value: ${{ steps.scan.outputs.files-scanned }}
   violating-files:
-    description: 'Space-separated list of files with at least one critical violation.'
+    description: 'Space-separated list of files with at least one violation that failed the scan step (at-or-above severity-threshold when fail-on-violation is true).'
     value: ${{ steps.scan.outputs.violating-files }}
 
 runs:
@@ -53,7 +53,8 @@ runs:
 
     - name: Install trustlint
       shell: bash
-      run: pip install --upgrade trustlint
+      # Pin for supply-chain reproducibility; bump deliberately on Action release.
+      run: pip install --upgrade 'trustlint==2.0.0'
 
     - name: Scan
       id: scan
