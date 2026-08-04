@@ -55,11 +55,11 @@ git ls-remote https://github.com/ComplyEdge/trustlint-action.git refs/tags/v1
 | Name | Required | Default | Description |
 |---|---|---|---|
 | `paths` | no | `**/prompts/*.md **/prompts/*.txt **/*.prompt agents/*.system.md` | Space-separated bash globs of files to scan. |
-| `jurisdiction` | no | `EU` | Jurisdiction filter (`EU` / `US` / `GLOBAL` / `universal`). |
-| `api-key` | no | empty | ComplyEdge API key. Set ⇒ `trustlint scan` (API-backed). Empty ⇒ `trustlint check` (offline). Always pass as a secret. |
-| `severity-threshold` | no | `high` | Minimum severity that fails the job: `critical` / `high` / `medium` / `low`. |
-| `fail-on-violation` | no | `true` | When `true`, fail the workflow on violations at-or-above the threshold. |
-| `comment-on-pr` | no | `false` | Post an idempotent Markdown report on the PR (`gh pr comment --edit-last`). Requires `pull-requests: write`. |
+| `jurisdiction` | no | `EU` | Jurisdiction filter for offline `check` (`EU` / `US` / `GLOBAL` / `universal`). |
+| `api-key` | no | empty | ComplyEdge API key. Set ⇒ `trustlint scan` (API); CLI **falls back to offline check** if the API is unreachable. Empty ⇒ offline `trustlint check`. Always pass as a secret. |
+| `severity-threshold` | no | `high` | Minimum severity that fails the job on the **offline `check` path**: `critical` / `high` / `medium` / `low`. Not a `scan` CLI flag — API path uses scan exit code / server policy. |
+| `fail-on-violation` | no | `true` | When `true`, fail the workflow when scanned files violate (non-zero trustlint exit). |
+| `comment-on-pr` | no | `false` | Post an idempotent Markdown report on the PR (`gh pr comment --edit-last`), including a Citation column. Requires `pull-requests: write`. |
 | `github-token` | no | `${{ github.token }}` | Token for `comment-on-pr`. |
 
 ## Outputs
@@ -77,9 +77,10 @@ High-value on **AI prompts, agent system prompts, content templates** — anythi
 
 - Installs pinned `trustlint==2.0.3` from PyPI.
 - Expands `paths`, runs `trustlint check` (or `scan` when `api-key` is set) per file.
+- Offline `check` honors `--severity-threshold` (default `high`). Optional `scan` has no severity flag; on API failure the CLI falls back to offline check.
 - Findings carry **rule citations** from the corpus when rules fire (also surfaced in optional PR comments).
-- Emits `::error file=…::` annotations on violations and (by default) fails the job.
-- Optional PR comment when `comment-on-pr: true`.
+- Emits `::error file=…::` annotations on violations (message includes the configured threshold) and (by default) fails the job.
+- Optional PR comment when `comment-on-pr: true` (table includes a **Citation** column).
 
 ## Test fixtures (this repo)
 
@@ -101,6 +102,7 @@ Suggested listing framing: CI gate for AI prompts/agent instructions with TrustL
 action.yml
 README.md
 LICENSE                 — Apache-2.0
+trustlint_action_intent.yaml
 scripts/
   run-scan.sh
   post-pr-comment.sh

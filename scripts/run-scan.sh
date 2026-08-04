@@ -14,7 +14,10 @@
 #   $4  severity_threshold  — critical | high | medium | low (default high)
 #
 # Env:
-#   COMPLYEDGE_API_KEY  — optional; when set, uses `trustlint scan` (API) instead of `trustlint check` (offline)
+#   COMPLYEDGE_API_KEY  — optional; when set, tries `trustlint scan` (API). The CLI
+#                         falls back to offline check if the API is unreachable.
+#                         `severity-threshold` applies only to the offline `check`
+#                         path (`scan` has no --severity-threshold flag).
 #   GITHUB_OUTPUT       — set by GitHub Actions; we append `files-scanned` + `violating-files` outputs there
 
 set -u  # strict-undefined, but NOT -e — we deliberately handle non-zero exits from trustlint
@@ -50,7 +53,7 @@ else
     COUNT=$((COUNT + 1))
     echo "::group::trustlint: ${file}"
     if [ -n "${COMPLYEDGE_API_KEY:-}" ]; then
-      # trustlint scan: API-backed; severity-threshold is the API's job server-side
+      # API path: scan has no --severity-threshold; CLI falls back to offline check on API errors.
       trustlint scan "$file" --api-key "$COMPLYEDGE_API_KEY"
     else
       trustlint check \
@@ -62,7 +65,7 @@ else
     echo "::endgroup::"
     if [ $sub_exit -ne 0 ]; then
       VIOLATING_FILES="${VIOLATING_FILES}${file} "
-      echo "::error file=${file}::TrustLint critical violation in ${file}"
+      echo "::error file=${file}::TrustLint violation in ${file} (severity-threshold=${SEVERITY_THRESHOLD})"
     fi
   done <<< "$FILES"
 fi

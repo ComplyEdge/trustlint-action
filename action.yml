@@ -15,11 +15,11 @@ inputs:
     required: false
     default: 'EU'
   api-key:
-    description: 'ComplyEdge API key. When set, the action runs `trustlint scan` (API-backed check against api.complyedge.io). When empty, runs `trustlint check` (offline, regex Tier-1). Set via a repo secret: `${{ secrets.COMPLYEDGE_API_KEY }}`.'
+    description: 'ComplyEdge API key. When set, runs `trustlint scan` (API Tier-2). If the API is unreachable, the CLI falls back to offline `check`. When empty, runs offline `trustlint check` (Tier-1 regex). Pass via `${{ secrets.COMPLYEDGE_API_KEY }}`.'
     required: false
     default: ''
   severity-threshold:
-    description: 'Minimum severity that causes the workflow to fail (critical | high | medium | low). Default `high` matches the trustlint CLI default and preserves prior behaviour. Shipped end-to-end with --severity-threshold.'
+    description: 'Minimum severity that fails the job on the offline `trustlint check` path (critical | high | medium | low). Default `high` matches the CLI. Not passed to `trustlint scan` (no CLI flag); API path uses server policy / scan exit code.'
     required: false
     default: 'high'
   fail-on-violation:

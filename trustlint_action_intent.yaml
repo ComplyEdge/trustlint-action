@@ -1,0 +1,106 @@
+# trustlint_action_intent.yaml
+# Intent Artifact for the ComplyEdge TrustLint GitHub Action
+#
+# IVD: Intent-Verified Development
+# Version: 1
+# Created: 2026-08-04
+# Status: active
+
+parent_intent: "../trustlint/trustlint_intent.yaml"
+
+scope:
+  level: "module"
+  type: "product"
+  granularity: "coarse"
+
+metadata:
+  feature_id: "trustlint_github_action"
+  category: "ci"
+  tags: ["github-action", "ci", "trustlint", "marketplace", "compliance"]
+  status: "active"
+
+intent:
+  summary: >
+    Composite GitHub Action that wraps the TrustLint CLI as a CI merge gate for
+    AI prompt and agent-instruction files (offline by default; optional API scan).
+
+  goal: |
+    Publish a Marketplace-listable Action that fails the build when TrustLint
+    finds violations at-or-above severity-threshold on configured path globs.
+    Product truth: Tier-1 offline check + rule citations; not OPA/runtime
+    enforcement and not an Annex III classifier.
+
+  success_metric: |
+    - Compliant fixture → job exit 0; violating fixture → job exit 1
+    - Offline path uses trustlint==pinned with --severity-threshold (default high)
+    - Findings can surface rule citations (CLI JSON + optional PR comment Citation column)
+    - Marketplace action.yml description ≤ 125 characters
+    - Floating major tag v1 points at a release that includes the current pin
+
+constraints:
+  - name: "offline_default"
+    requirement: "With empty api-key, Action runs trustlint check (no network required for rules in the wheel)"
+    test: "run-scan.sh compliant.md EU true high → exit 0 without COMPLYEDGE_API_KEY"
+    entropy: "near-zero"
+    priority: 1
+
+  - name: "fail_the_build"
+    requirement: "fail-on-violation true fails the job when trustlint exits non-zero"
+    test: "selftest fail-case job / run-scan.sh violating.md EU true high → exit 1"
+    entropy: "near-zero"
+    priority: 1
+
+  - name: "soft_mode"
+    requirement: "fail-on-violation false reports violations but exits 0"
+    test: "run-scan.sh violating.md EU false high → exit 0"
+    entropy: "near-zero"
+    priority: 2
+
+  - name: "severity_threshold_offline"
+    requirement: "severity-threshold is passed to offline trustlint check only"
+    test: "grep run-scan.sh: check branch has --severity-threshold; scan branch does not"
+    entropy: "near-zero"
+    priority: 2
+
+  - name: "api_fallback_honesty"
+    requirement: "Docs state scan falls back to offline check when API unreachable"
+    test: "README + action.yml api-key descriptions mention fallback"
+    entropy: "near-zero"
+    priority: 2
+
+  - name: "annotation_not_hardcoded_critical"
+    requirement: "::error annotations must not claim critical-only when threshold may differ"
+    test: "run-scan.sh annotation includes severity-threshold=…"
+    entropy: "near-zero"
+    priority: 2
+
+  - name: "citations_in_pr_comment"
+    requirement: "Optional PR comment table includes Citation column when comment-on-pr true"
+    test: "selftest render-comment-smoke greps '| Citation |' and sample citation cell"
+    entropy: "near-zero"
+    priority: 2
+
+  - name: "marketplace_description_limit"
+    requirement: "Root action.yml description field ≤ 125 characters"
+    test: "len(description) ≤ 125"
+    entropy: "near-zero"
+    priority: 1
+
+  - name: "product_truth_copy"
+    requirement: "README forbids framing Action as OPA/runtime gateway or Annex III classifier"
+    test: "README contains not-OPA / not-Annex-III disclaimer"
+    entropy: "low"
+    priority: 2
+
+  - name: "pinned_cli"
+    requirement: "Action installs a pinned trustlint version that supports --severity-threshold and --json"
+    test: "action.yml pin ≥ 2.0.1; currently trustlint==2.0.3"
+    entropy: "near-zero"
+    priority: 1
+
+changelog:
+  - version: 1
+    date: "2026-08-04"
+    change: "Intent created from Marketplace readiness deep-validate gaps"
+    reason: "Action had no module intent; drifts were undocumented"
+    evidence: "ada playground ce_public_surface_gate --pip-smoke; public tag matrix"
