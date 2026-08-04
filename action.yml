@@ -54,7 +54,7 @@ runs:
     - name: Install trustlint
       shell: bash
       # Pin for supply-chain reproducibility; bump deliberately on Action release.
-      run: pip install --upgrade 'trustlint==2.0.0'
+      run: pip install --upgrade 'trustlint==2.0.3'
 
     - name: Scan
       id: scan

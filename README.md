@@ -75,7 +75,7 @@ High-value on **AI prompts, agent system prompts, content templates** — anythi
 
 ## Behaviour
 
-- Installs pinned `trustlint==2.0.0` from PyPI.
+- Installs pinned `trustlint==2.0.3` from PyPI.
 - Expands `paths`, runs `trustlint check` (or `scan` when `api-key` is set) per file.
 - Findings carry **rule citations** from the corpus when rules fire (also surfaced in optional PR comments).
 - Emits `::error file=…::` annotations on violations and (by default) fails the job.
@@ -84,7 +84,7 @@ High-value on **AI prompts, agent system prompts, content templates** — anythi
 ## Test fixtures (this repo)
 
 ```bash
-pip install 'trustlint==2.0.0'
+pip install 'trustlint==2.0.3'
 bash scripts/run-scan.sh 'test-prompts/compliant.md' EU true high   # exit 0
 bash scripts/run-scan.sh 'test-prompts/violating.md' EU true high   # exit 1
 ```
