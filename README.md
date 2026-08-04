@@ -1,8 +1,11 @@
 # ComplyEdge TrustLint — GitHub Action
 
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-ComplyEdge%20TrustLint-blue?logo=github)](https://github.com/marketplace/actions/complyedge-trustlint)
+
 CI gate that lint-scans **AI prompts and agent-instruction files** with ComplyEdge’s [TrustLint](https://pypi.org/project/trustlint/) corpus and **article citations** — not an Annex III paperwork scorer and not a production runtime gateway. Offline `trustlint check` by default; optional API-backed `trustlint scan` with a ComplyEdge API key. Fails the job on threshold violations so prohibited-practice prompts do not merge.
 
 **Install:** `uses: complyedge/trustlint-action@v1`  
+**Marketplace:** https://github.com/marketplace/actions/complyedge-trustlint  
 **Product:** https://complyedge.io  
 **Public repo:** https://github.com/ComplyEdge/trustlint-action  
 **PyPI CLI:** https://pypi.org/project/trustlint/  
@@ -92,9 +95,9 @@ bash scripts/run-scan.sh 'test-prompts/violating.md' EU true high   # exit 1
 
 ## Marketplace
 
-Branding is set in `action.yml` (`shield` / `blue`). Publish or update the GitHub Marketplace listing from this repo’s Releases UI (org admin + Marketplace Developer Agreement + 2FA).
+**Live listing:** https://github.com/marketplace/actions/complyedge-trustlint  
 
-Suggested listing framing: CI gate for AI prompts/agent instructions with TrustLint corpus and article citations — freemium offline check → optional API key. Categories: **Security** (primary), **Code quality** (secondary).
+Branding is set in `action.yml` (`shield` / `blue`). Categories: **Security** (primary), **Code quality** (secondary). Listing framing: CI gate for AI prompts/agent instructions with TrustLint corpus and article citations — freemium offline `trustlint check` → optional API `trustlint scan`. Not legal advice; not certified by GitHub. To update the listing later: Releases UI → edit published release (org admin + Marketplace Developer Agreement + 2FA).
 
 ## Layout
 
